@@ -68,7 +68,7 @@ workflows:
       - version:
           filters:
             branches:
-              ignore:
+              only:
                 - master
       - build:
           requires:
