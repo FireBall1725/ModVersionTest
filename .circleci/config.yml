@@ -11,7 +11,7 @@ jobs:
       - run:
           name: get new version
           command: |
-            NEW_VERSION=$(docker run --rm -v $(pwd):/repo codacy/git-version)
+            export NEW_VERSION=$(docker run --rm -v $(pwd):/repo codacy/git-version)
             echo $NEW_VERSION
             mkdir -p workspace
             echo $NEW_VERSION > workspace/version
