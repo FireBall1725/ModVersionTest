@@ -13,6 +13,11 @@ jobs:
             echo $NEW_VERSION
             mkdir -p workspace
             echo $NEW_VERSION > workspace/version
+      - run:
+          name: create git tag
+          command: |
+            git config user.email "circleci@circleci.com"
+            git config user.name "CircleCI"
             git tag -a $NEW_VERSION -m $NEW_VERSION
       - persist_to_workspace:
           root: workspace
