@@ -12,16 +12,8 @@ jobs:
           name: get new version
           command: |
             export NEW_VERSION=$(docker run --rm -v $(pwd):/repo codacy/git-version)
-            echo $NEW_VERSION
             mkdir -p workspace
             echo $NEW_VERSION > workspace/version
-      - run:
-          name: create git tag
-          command: |
-            export VERSION=`cat workspace/version`
-            git config user.email "circleci@circleci.com"
-            git config user.name "CircleCI"
-            git tag -a $VERSION -m "local tag"
       - persist_to_workspace:
           root: workspace
           paths:
@@ -40,11 +32,16 @@ jobs:
 
     steps:
       - checkout
+      - attach_workspace:
+          at: ./workspace
 
-      # restore saved caches
-      - restore_cache:
-          keys:
-            - gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+      - run:
+          name: create git tag
+          command: |
+            export VERSION=`cat workspace/version`
+            git config user.email "circleci@circleci.com"
+            git config user.name "CircleCI"
+            git tag -a $VERSION -m "local tag"
 
       - run: ./gradlew build jar
 
