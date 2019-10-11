@@ -68,7 +68,7 @@ jobs:
     steps:
       - run:
           name: do maven/curse publishes here
-          command: ""
+          command: echo "do maven/curse publishes here"
 
 
   gh_release:
