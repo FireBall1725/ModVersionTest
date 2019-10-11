@@ -1,4 +1,4 @@
-version = System.getenv("VERSION") ?: "0.0.0"
+apply plugin: "com.limark.gitflowsemver"
 
 // todo: Update this to archiveClassifier (for Gradle 5)
 jar {

@@ -58,6 +58,22 @@ jobs:
             - build/libs/*
             - CHANGELOG.md
 
+  publish:
+    docker:
+        - image: circleci/openjdk:8-jdk
+
+    working_directory: ~/repo
+
+    environment:
+      # Customize the JVM maximum heap limit
+      JVM_OPTS: -Xmx3200m
+      TERM: dumb
+    steps:
+      - run:
+          name: do maven/curse publishes here
+          command: ""
+
+
   gh_release:
     docker:
       - image: cibuilds/github:latest
@@ -66,12 +82,9 @@ jobs:
       - attach_workspace:
           at: ./workspace
       - run:
-          name: get version
-          command: |
-            export VERSION=`cat ./workspace/version`
-      - run:
           name: "Publish Release on GitHub"
           command: |
+            export VERSION=`cat ./workspace/version`
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -body="$(cat ./workspace/CHANGELOG.md)" -delete ${VERSION} ./workspace/build/libs/
 
 
@@ -87,6 +100,9 @@ workflows:
       - build:
           requires:
             - version
+      - publish:
+          requires:
+            - build
       - gh_release:
           requires:
             - build
