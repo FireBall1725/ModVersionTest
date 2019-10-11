@@ -34,9 +34,8 @@ jobs:
       - checkout
       - attach_workspace:
           at: ./workspace
-
       - run:
-          name: create git tag
+          name: create local git tag
           command: |
             export VERSION=`cat workspace/version`
             git config user.email "circleci@circleci.com"
