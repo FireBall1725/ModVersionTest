@@ -1,7 +1,8 @@
 version: 2
 jobs:
   version:
-    machine: true
+    machine:
+      image: ubuntu-1604:201903-01
     working_directory: ~/repo
     steps:
       - checkout
@@ -10,8 +11,9 @@ jobs:
           command: |
             NEW_VERSION=$(docker run --rm -v $(pwd):/repo codacy/git-version)
             echo $NEW_VERSION
-            mkdir workspace
+            mkdir -p workspace
             echo $NEW_VERSION > workspace/version
+            git tag -a $NEW_VERSION -m $NEW_VERSION
       - persist_to_workspace:
           root: workspace
           paths:
@@ -19,13 +21,7 @@ jobs:
 
   build:
     docker:
-      # specify the version you desire here
       - image: circleci/openjdk:8-jdk
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/postgres:9.4
 
     working_directory: ~/repo
 
@@ -36,14 +32,6 @@ jobs:
 
     steps:
       - checkout
-      
-      - attach_workspace:
-          at: /tmp/workspace
-
-      - run:
-          name: get new version
-          command: |
-            export VERSION=`cat /tmp/workspace/version`
 
       - run: ./gradlew build jar
 
@@ -51,11 +39,48 @@ jobs:
           path: build/libs
           destination: artifact-file
 
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - build/libs/*
+
+  gh_release:
+    docker:
+      - image: cibuilds/github:latest
+    working_directory: ~/repo
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          name: get version
+          command: |
+            export VERSION=`cat /tmp/workspace/version`
+      - run:
+          name: "Publish Release on GitHub"
+          command: |
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./tmp/workspace/build/libs/
+
+
 workflows:
   version: 2
-  build_and_test:
+  build_release:
     jobs:
-      - version
+      - version:
+          filters:
+            branches:
+              ignore:
+                - master
       - build:
           requires:
             - version
+      - gh_release:
+          requires:
+            - build
+  build:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore:
+                - master
+
