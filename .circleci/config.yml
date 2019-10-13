@@ -11,6 +11,7 @@ jobs:
           command: |
             export NEW_VERSION=$(docker run --rm -v $(pwd):/repo codacy/git-version)
             echo $NEW_VERSION > CI_VERSION
+            echo $NEW_VERSION
       - persist_to_workspace:
           root: .
           paths:
@@ -28,19 +29,13 @@ jobs:
       TERM: dumb
 
     steps:
+      - checkout
+
       - attach_workspace:
           at: .
-      - checkout
       - run:
-          name: create local git tag
           command: |
-            if [ "$CIRCLE_BRANCH" != "master" ]; then
-              circleci-agent step halt
-            fi
-            export VERSION=`cat CI_VERSION`
-            git config user.email "circleci@circleci.com"
-            git config user.name "CircleCI"
-            git tag -a $VERSION -m "local tag"
+            export CI_VERSION=`cat CI_VERSION`
 
       - run: ./gradlew build jar
 
@@ -56,9 +51,7 @@ jobs:
   publish:
     docker:
       - image: circleci/openjdk:8-jdk
-
     working_directory: ~/repo
-
     environment:
       # Customize the JVM maximum heap limit
       JVM_OPTS: -Xmx3200m
@@ -67,28 +60,24 @@ jobs:
       - attach_workspace:
           at: .
       - run:
+          command: |
+            export CI_VERSION=`cat CI_VERSION`
+      - run:
           name: "Publish Release"
           command: ./gradlew githubRelease publishGithubPublicationToGithubRepository # artifactorypublish curseforge
 
 workflows:
   version: 2
-  build_release:
+  main:
     jobs:
-      - version:
-          filters:
-            branches:
-              only:
-                - master
+      - version
       - build:
           requires:
             - version
       - publish:
-          requires:
-            - build
-  build:
-    jobs:
-      - build:
           filters:
             branches:
-              ignore:
+              only:
                 - master
+          requires:
+            - build
