@@ -4,20 +4,17 @@ jobs:
     machine:
       image: ubuntu-1604:201903-01
     working_directory: ~/repo
-    environment:
-      TERM: xterm
     steps:
       - checkout
       - run:
           name: get new version
           command: |
             export NEW_VERSION=$(docker run --rm -v $(pwd):/repo codacy/git-version)
-            mkdir -p workspace
-            echo $NEW_VERSION > workspace/version
+            echo $NEW_VERSION > CI_VERSION
       - persist_to_workspace:
-          root: workspace
+          root: .
           paths:
-            - version
+            - CI_VERSION
 
   build:
     docker:
@@ -31,13 +28,16 @@ jobs:
       TERM: dumb
 
     steps:
-      - checkout
       - attach_workspace:
-          at: ./workspace
+          at: .
+      - checkout
       - run:
           name: create local git tag
           command: |
-            export VERSION=`cat workspace/version`
+            if [ "$CIRCLE_BRANCH" != "master" ]; then
+              circleci-agent step halt
+            fi
+            export VERSION=`cat CI_VERSION`
             git config user.email "circleci@circleci.com"
             git config user.name "CircleCI"
             git tag -a $VERSION -m "local tag"
@@ -51,12 +51,11 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - build/libs/*
-            - CHANGELOG.md
+            - ./*
 
   publish:
     docker:
-        - image: circleci/openjdk:8-jdk
+      - image: circleci/openjdk:8-jdk
 
     working_directory: ~/repo
 
@@ -65,24 +64,11 @@ jobs:
       JVM_OPTS: -Xmx3200m
       TERM: dumb
     steps:
-      - run:
-          name: do maven/curse publishes here
-          command: echo "do maven/curse publishes here"
-
-
-  gh_release:
-    docker:
-      - image: cibuilds/github:latest
-    working_directory: ~/repo
-    steps:
       - attach_workspace:
-          at: ./workspace
+          at: .
       - run:
-          name: "Publish Release on GitHub"
-          command: |
-            export VERSION=`cat ./workspace/version`
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -body="$(cat ./workspace/CHANGELOG.md)" -delete ${VERSION} ./workspace/build/libs/
-
+          name: "Publish Release"
+          command: ./gradlew githubRelease publishGithubPublicationToGithubRepository # artifactorypublish curseforge
 
 workflows:
   version: 2
@@ -99,9 +85,6 @@ workflows:
       - publish:
           requires:
             - build
-      - gh_release:
-          requires:
-            - build
   build:
     jobs:
       - build:
@@ -109,4 +92,3 @@ workflows:
             branches:
               ignore:
                 - master
-

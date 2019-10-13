@@ -8,13 +8,8 @@ def reobfArtifact = artifacts.add('default', reobfFile) {
 }
 publishing {
     publications {
-        mavenJava(MavenPublication) {
+        artifactory(MavenPublication) {
             artifact reobfArtifact
-        }
-    }
-    repositories {
-        maven {
-            url "file:///${project.projectDir}/mcmodsrepo"
         }
     }
 }
@@ -31,7 +26,7 @@ artifactory {
             maven = true
         }
         defaults {
-            publications('mavenJava')
+            publications('artifactory')
         }
         publishBuildInfo = true
         publishArtifacts = true
