@@ -59,6 +59,9 @@ jobs:
       - attach_workspace:
           at: .
       - run:
+          command: |
+            export VERSION=`cat CI_VERSION`
+      - run:
           name: "Publish Release"
           command: ./gradlew githubRelease publishGithubPublicationToGithubRepository # artifactorypublish curseforge
 
