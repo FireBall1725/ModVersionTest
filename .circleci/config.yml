@@ -29,6 +29,7 @@ jobs:
 
     steps:
       - checkout
+
       - attach_workspace:
           at: .
       - run:
@@ -38,6 +39,8 @@ jobs:
               git config user.email "circleci@circleci.com"
               git config user.name "CircleCI"
               git tag -a $VERSION -m "local tag"
+            else
+              git fetch --tags && git tag
             fi
 
       - run: ./gradlew build jar
