@@ -28,9 +28,9 @@ jobs:
       TERM: dumb
 
     steps:
+      - checkout
       - attach_workspace:
           at: .
-      - checkout
       - run:
           name: create local git tag
           command: |
