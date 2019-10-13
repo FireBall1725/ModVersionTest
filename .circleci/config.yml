@@ -60,6 +60,9 @@ jobs:
       - attach_workspace:
           at: .
       - run:
+          command: |
+            export CI_VERSION=`cat CI_VERSION`
+      - run:
           name: "Publish Release"
           command: |
             export CI_VERSION=`cat CI_VERSION`
