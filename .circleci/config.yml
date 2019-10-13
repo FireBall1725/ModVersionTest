@@ -32,15 +32,13 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: create local git tag
           command: |
             if [ "$CIRCLE_BRANCH" = "master" ]; then
-              circleci-agent step halt
+              export VERSION=`cat CI_VERSION`
+              git config user.email "circleci@circleci.com"
+              git config user.name "CircleCI"
+              git tag -a $VERSION -m "local tag"
             fi
-            export VERSION=`cat CI_VERSION`
-            git config user.email "circleci@circleci.com"
-            git config user.name "CircleCI"
-            git tag -a $VERSION -m "local tag"
 
       - run: ./gradlew build jar
 
