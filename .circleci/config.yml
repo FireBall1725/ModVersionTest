@@ -11,6 +11,7 @@ jobs:
           command: |
             export NEW_VERSION=$(docker run --rm -v $(pwd):/repo codacy/git-version)
             echo $NEW_VERSION > CI_VERSION
+            echo $NEW_VERSION
       - persist_to_workspace:
           root: .
           paths:
@@ -34,7 +35,7 @@ jobs:
           at: .
       - run:
           command: |
-            export VERSION=`cat CI_VERSION`
+            export CI_VERSION=`cat CI_VERSION`
 
       - run: ./gradlew build jar
 
@@ -60,7 +61,7 @@ jobs:
           at: .
       - run:
           command: |
-            export VERSION=`cat CI_VERSION`
+            export CI_VERSION=`cat CI_VERSION`
       - run:
           name: "Publish Release"
           command: ./gradlew githubRelease publishGithubPublicationToGithubRepository # artifactorypublish curseforge
