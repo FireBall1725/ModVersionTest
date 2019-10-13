@@ -34,14 +34,7 @@ jobs:
           at: .
       - run:
           command: |
-            if [ "$CIRCLE_BRANCH" = "master" ]; then
-              export VERSION=`cat CI_VERSION`
-              git config user.email "circleci@circleci.com"
-              git config user.name "CircleCI"
-              git tag -a $VERSION -m "local tag"
-            else
-              git fetch --tags && git tag
-            fi
+            export VERSION=`cat CI_VERSION`
 
       - run: ./gradlew build jar
 
@@ -73,7 +66,7 @@ jobs:
 
 workflows:
   version: 2
-  build_release:
+  main:
     jobs:
       - version:
           filters:
@@ -84,12 +77,9 @@ workflows:
           requires:
             - version
       - publish:
-          requires:
-            - build
-  build:
-    jobs:
-      - build:
           filters:
             branches:
-              ignore:
+              only:
                 - master
+          requires:
+            - build
