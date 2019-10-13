@@ -68,11 +68,7 @@ workflows:
   version: 2
   main:
     jobs:
-      - version:
-          filters:
-            branches:
-              only:
-                - master
+      - version
       - build:
           requires:
             - version
