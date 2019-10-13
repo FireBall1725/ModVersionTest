@@ -34,7 +34,7 @@ jobs:
       - run:
           name: create local git tag
           command: |
-            if [ "$CIRCLE_BRANCH" != "master" ]; then
+            if [ "$CIRCLE_BRANCH" = "master" ]; then
               circleci-agent step halt
             fi
             export VERSION=`cat CI_VERSION`
