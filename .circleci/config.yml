@@ -30,14 +30,13 @@ jobs:
 
     steps:
       - checkout
-
       - attach_workspace:
           at: .
       - run:
+          name: "Build"
           command: |
             export CI_VERSION=`cat CI_VERSION`
-
-      - run: ./gradlew build jar
+            ./gradlew build
 
       - store_artifacts:
           path: build/libs
@@ -48,7 +47,7 @@ jobs:
           paths:
             - ./*
 
-  publish:
+  build_publish:
     docker:
       - image: circleci/openjdk:8-jdk
     working_directory: ~/repo
@@ -57,6 +56,7 @@ jobs:
       JVM_OPTS: -Xmx3200m
       TERM: dumb
     steps:
+      - checkout
       - attach_workspace:
           at: .
       - run:
@@ -64,7 +64,9 @@ jobs:
             export CI_VERSION=`cat CI_VERSION`
       - run:
           name: "Publish Release"
-          command: ./gradlew githubRelease publishGithubPublicationToGithubRepository # artifactorypublish curseforge
+          command: |
+            export CI_VERSION=`cat CI_VERSION`
+            ./gradlew build githubRelease publishGithubPublicationToGithubRepository # artifactorypublish curseforge
 
 workflows:
   version: 2
@@ -72,12 +74,16 @@ workflows:
     jobs:
       - version
       - build:
+          filters:
+            branches:
+              ignore:
+                - master
           requires:
             - version
-      - publish:
+      - build_publish:
           filters:
             branches:
               only:
                 - master
           requires:
-            - build
+            - version
